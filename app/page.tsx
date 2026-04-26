@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useCallback, useEffect, Suspense } from 'react';
+import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { useStore } from './store';
 import ControlPanel from './components/ControlPanel';
 
@@ -18,6 +20,7 @@ const Viewer = dynamic(() => import('./components/Viewer'), {
 });
 
 export default function Home() {
+  const router = useRouter();
   const { autoRotate, setAutoRotate, toast, setToast, imageUrl, editorImageUrl, setImageUrl, setEditorImageUrl } = useStore();
   const [isClient, setIsClient] = useState(false);
 
@@ -44,6 +47,9 @@ export default function Home() {
       <header className="header">
         <div className="logo">Miantsa iPhone Case Maker</div>
         <div className="header-actions">
+          <Link href="/designs" className="btn btn-secondary">
+            My Designs
+          </Link>
           <label className="checkbox-group">
             <input 
               type="checkbox" 
