@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback } from 'react';
 import { useStore } from '../store';
+import { createDesign } from '../actions';
 
 interface UploadZoneProps {
   onOpenEditor: () => void;
@@ -10,9 +11,9 @@ interface UploadZoneProps {
 export default function UploadZone({ onOpenEditor }: UploadZoneProps) {
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { imageUrl, setImageUrl, setToast } = useStore();
+  const { imageUrl, setImageUrl, setToast, caseColor, caseFinish, positionX, positionY, scale, rotation, opacity } = useStore();
 
-  const handleFile = useCallback((file: File) => {
+const handleFile = useCallback(async (file: File) => {
     const validTypes = ['image/png', 'image/jpeg', 'image/jpg'];
     
     if (!validTypes.includes(file.type)) {
@@ -32,7 +33,7 @@ export default function UploadZone({ onOpenEditor }: UploadZoneProps) {
       onOpenEditor();
     };
     reader.readAsDataURL(file);
-  }, [setImageUrl, setToast, onOpenEditor]);
+  }, [setImageUrl, setToast, onOpenEditor, caseColor, caseFinish, positionX, positionY, scale, rotation, opacity]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();

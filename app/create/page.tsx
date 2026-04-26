@@ -25,41 +25,65 @@ export default function CreatePage() {
   const { autoRotate, setAutoRotate, toast, setToast, imageUrl, editorImageUrl, setImageUrl, setEditorImageUrl } = useStore();
   const [isClient, setIsClient] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [designName, setDesignName] = useState('');
 
   useEffect(() => {
     setIsClient(true);
+    
+    const storedName = sessionStorage.getItem('newDesignName');
+    if (storedName) {
+      setDesignName(storedName);
+    }
   }, []);
+
+  useEffect(() => {
+    if (designName) {
+      sessionStorage.setItem('newDesignName', designName);
+    }
+  }, [designName]);
+
+  const handleDesignNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDesignName(e.target.value);
+  };
 
   const hasImage = imageUrl || editorImageUrl;
 
   const handleSaveDesign = useCallback(async () => {
-    if (!hasImage) return;
-    
-    const name = prompt('Enter a name for this design:');
-    if (!name) return;
+    if (!hasImage) {
+      setToast('Please upload an image first');
+      return;
+    }
+    if (!designName) {
+      setToast('Please enter a design name');
+      return;
+    }
     
     setSaving(true);
     
-    const state = useStore.getState();
-    const safeImageUrl = state.imageUrl || undefined;
-    const safeEditorImageUrl = state.editorImageUrl || undefined;
-    
-    await createDesign({
-      name,
-      caseColor: state.caseColor,
-      caseFinish: state.caseFinish,
-      imageUrl: safeImageUrl,
-      editorImageUrl: safeEditorImageUrl,
-      positionX: state.positionX,
-      positionY: state.positionY,
-      scale: state.scale,
-      rotation: state.rotation,
-      opacity: state.opacity,
-    });
-    
-    setSaving(false);
-    setToast('Design saved!');
-  }, [hasImage, setToast]);
+    try {
+      const state = useStore.getState();
+      const safeEditorImageUrl = state.editorImageUrl || undefined;
+      
+      await createDesign({
+        name: designName,
+        caseColor: state.caseColor,
+        caseFinish: state.caseFinish,
+        editorImageUrl: safeEditorImageUrl,
+        positionX: state.positionX,
+        positionY: state.positionY,
+        scale: state.scale,
+        rotation: state.rotation,
+        opacity: state.opacity,
+      });
+      
+      setToast('Design saved!');
+    } catch (error) {
+      console.error('Failed to save design:', error);
+      setToast('Failed to save design');
+    } finally {
+      setSaving(false);
+    }
+  }, [hasImage, designName, setToast]);
 
   const handleResetView = useCallback(() => {
   }, []);
@@ -85,6 +109,13 @@ export default function CreatePage() {
           <Link href="/designs" className="btn btn-secondary">
             My Designs
           </Link>
+          <input
+            type="text"
+            className="name-input"
+            placeholder="Design name"
+            value={designName}
+            onChange={handleDesignNameChange}
+          />
           {hasImage && (
             <button className="btn btn-primary" onClick={handleSaveDesign} disabled={saving}>
               {saving ? 'Saving...' : 'Save Design'}

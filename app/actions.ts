@@ -3,18 +3,6 @@
 import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 
-export async function getDesigns() {
-  return prisma.design.findMany({
-    orderBy: { updatedAt: 'desc' },
-  });
-}
-
-export async function getDesign(id: string) {
-  return prisma.design.findUnique({
-    where: { id },
-  });
-}
-
 export async function createDesign(data: {
   name: string;
   caseColor?: string;
@@ -27,6 +15,11 @@ export async function createDesign(data: {
   rotation?: number;
   opacity?: number;
 }) {
+  // Validate image size (approximate base64 check)
+  if (data.imageUrl && data.imageUrl.length > 4 * 1024 * 1024) { // ~4MB base64 ~3MB binary
+    throw new Error('Image too large. Please use a smaller image.');
+  }
+  
   const design = await prisma.design.create({
     data: {
       name: data.name,
@@ -45,6 +38,18 @@ export async function createDesign(data: {
   return design;
 }
 
+export async function getDesign(id: string) {
+  return prisma.design.findUnique({
+    where: { id },
+  });
+}
+
+export async function getDesigns() {
+  return prisma.design.findMany({
+    orderBy: { updatedAt: 'desc' },
+  });
+}
+
 export async function updateDesign(
   id: string,
   data: {
@@ -60,6 +65,11 @@ export async function updateDesign(
     opacity?: number;
   }
 ) {
+  // Validate image size (approximate base64 check)
+  if (data.imageUrl && typeof data.imageUrl === 'string' && data.imageUrl.length > 4 * 1024 * 1024) { // ~4MB base64 ~3MB binary
+    throw new Error('Image too large. Please use a smaller image.');
+  }
+  
   const design = await prisma.design.update({
     where: { id },
     data,

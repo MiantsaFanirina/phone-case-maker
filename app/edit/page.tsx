@@ -33,7 +33,7 @@ export default function EditImagePage() {
   useEffect(() => {
     const srcUrl = imageUrl || editorImageUrl;
     if (!srcUrl) {
-      router.push('/');
+      router.push('/create');
       return;
     }
     const image = new Image();
@@ -41,7 +41,7 @@ export default function EditImagePage() {
     image.src = srcUrl;
   }, [imageUrl, editorImageUrl, router]);
 
-  const draw = useCallback(() => {
+const draw = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas || !img) return;
     
@@ -90,8 +90,8 @@ export default function EditImagePage() {
     
     ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
     ctx.restore();
-
-    const dataUrl = canvas.toDataURL('image/png');
+    
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.7); // Compress to 70% quality JPEG
     setEditorImageUrl(dataUrl);
   }, [img, caseColor, positionX, positionY, scale, rotation, opacity, setEditorImageUrl]);
 
@@ -101,13 +101,13 @@ export default function EditImagePage() {
 
   const handleApply = () => {
     draw();
-    router.push('/');
+    router.push('/create');
   };
 
   const handleCancel = () => {
     setImageUrl(null);
     setEditorImageUrl(null);
-    router.push('/');
+    router.push('/create');
   };
 
   const handleReset = () => {

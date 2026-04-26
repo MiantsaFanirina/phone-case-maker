@@ -9,6 +9,8 @@ export default function HomePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [showNewDialog, setShowNewDialog] = useState(false);
+  const [newName, setNewName] = useState('');
   const { designs, setDesigns } = useDesignStore();
 
   useEffect(() => {
@@ -21,7 +23,15 @@ export default function HomePage() {
   }, [setDesigns]);
 
   const handleCreate = () => {
-    router.push('/');
+    setShowNewDialog(true);
+  };
+
+  const handleCreateSubmit = () => {
+    if (!newName.trim()) return;
+    sessionStorage.setItem('newDesignName', newName.trim());
+    router.push('/create');
+    setShowNewDialog(false);
+    setNewName('');
   };
 
   const handleEdit = (id: string) => {
@@ -115,6 +125,32 @@ export default function HomePage() {
           </div>
         )}
       </main>
+
+      {showNewDialog && (
+        <div className="dialog-overlay" onClick={() => setShowNewDialog(false)}>
+          <div className="dialog" onClick={(e) => e.stopPropagation()}>
+            <h2>New Design</h2>
+            <div className="form-group">
+              <label>Design Name</label>
+              <input
+                type="text"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="Enter design name"
+                autoFocus
+              />
+            </div>
+            <div className="dialog-actions">
+              <button className="btn" onClick={() => setShowNewDialog(false)}>
+                Cancel
+              </button>
+              <button className="btn btn-primary" onClick={handleCreateSubmit}>
+                Create
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
