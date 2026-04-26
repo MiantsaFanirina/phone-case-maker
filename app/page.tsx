@@ -4,7 +4,6 @@ import { useState, useCallback, useEffect, Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import { useStore } from './store';
 import ControlPanel from './components/ControlPanel';
-import ImageEditor from './components/ImageEditor';
 
 const Viewer = dynamic(() => import('./components/Viewer'), { 
   ssr: false,
@@ -19,16 +18,14 @@ const Viewer = dynamic(() => import('./components/Viewer'), {
 });
 
 export default function Home() {
-  const { autoRotate, setAutoRotate, toast, setToast, imageUrl, setImageUrl } = useStore();
+  const { autoRotate, setAutoRotate, toast, setToast, imageUrl, editorImageUrl, setImageUrl, setEditorImageUrl } = useStore();
   const [isClient, setIsClient] = useState(false);
-  const [showEditor, setShowEditor] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
   const handleResetView = useCallback(() => {
-    // Reset camera position - handled by OrbitControls internally
   }, []);
 
   const handleToggleRotate = useCallback(() => {
@@ -37,15 +34,10 @@ export default function Home() {
 
   const handleClearImage = useCallback(() => {
     setImageUrl(null);
-  }, [setImageUrl]);
+    setEditorImageUrl(null);
+  }, [setImageUrl, setEditorImageUrl]);
 
-  const handleOpenEditor = useCallback(() => {
-    setShowEditor(true);
-  }, []);
-
-  const handleCloseEditor = useCallback(() => {
-    setShowEditor(false);
-  }, []);
+  const hasImage = imageUrl || editorImageUrl;
 
   return (
     <div className="app">
@@ -62,7 +54,7 @@ export default function Home() {
             <span className="checkbox-label"></span>
             <span className="checkbox-text">Auto Rotate</span>
           </label>
-          {imageUrl && (
+          {hasImage && (
             <button className="btn btn-secondary" onClick={handleClearImage}>
               Clear
             </button>
@@ -74,10 +66,8 @@ export default function Home() {
         {isClient && (
           <Viewer onResetView={handleResetView} />
         )}
-        <ControlPanel onOpenEditor={handleOpenEditor} />
+        <ControlPanel />
       </main>
-
-      {showEditor && <ImageEditor onClose={handleCloseEditor} />}
 
       {toast && (
         <div className="toast" onClick={() => setToast(null)}>

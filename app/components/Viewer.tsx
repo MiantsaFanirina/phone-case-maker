@@ -118,13 +118,13 @@ function PhoneCase() {
     if (!srcUrl || !geometry || !caseColor) return;
     
     const canvas = document.createElement('canvas');
-    canvas.width = 400;
-    canvas.height = 800;
+    canvas.width = 1200;
+    canvas.height = 2400;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const radius = 60;
-    const border = 10;
+    const radius = 195;
+    const border = 30;
 
     const img = new Image();
     img.onload = () => {
