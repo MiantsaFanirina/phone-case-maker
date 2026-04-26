@@ -33,9 +33,23 @@ interface DecalState {
   setCaseColor: (color: string) => void;
   setCaseFinish: (finish: string) => void;
   reset: () => void;
+  snapshot: () => void;
+  rollback: () => void;
 }
 
-export const useStore = create<DecalState>((set) => ({
+interface Snapshot {
+  imageUrl: string | null;
+  editorImageUrl: string | null;
+  positionX: number;
+  positionY: number;
+  scale: number;
+  rotation: number;
+  opacity: number;
+}
+
+let currentSnapshot: Snapshot | null = null;
+
+export const useStore = create<DecalState>((set, get) => ({
   imageUrl: null,
   editorImageUrl: null,
   positionX: 0,
@@ -51,6 +65,33 @@ export const useStore = create<DecalState>((set) => ({
   toast: null,
   caseColor: '#DFCEEA',
   caseFinish: 'glossy',
+  
+  snapshot: () => {
+    const state = get();
+    currentSnapshot = {
+      imageUrl: state.imageUrl,
+      editorImageUrl: state.editorImageUrl,
+      positionX: state.positionX,
+      positionY: state.positionY,
+      scale: state.scale,
+      rotation: state.rotation,
+      opacity: state.opacity,
+    };
+  },
+  
+  rollback: () => {
+    if (currentSnapshot) {
+      set({
+        imageUrl: currentSnapshot.imageUrl,
+        editorImageUrl: currentSnapshot.editorImageUrl,
+        positionX: currentSnapshot.positionX,
+        positionY: currentSnapshot.positionY,
+        scale: currentSnapshot.scale,
+        rotation: currentSnapshot.rotation,
+        opacity: currentSnapshot.opacity,
+      });
+    }
+  },
   
   setImageUrl: (url) => set({ imageUrl: url }),
   setEditorImageUrl: (url) => set({ editorImageUrl: url }),

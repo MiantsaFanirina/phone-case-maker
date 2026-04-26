@@ -8,7 +8,11 @@ import UploadZone from './UploadZone';
 import ExportPanel from './ExportPanel';
 import CaseSettings from './CaseSettings';
 
-export default function ControlPanel() {
+interface ControlPanelProps {
+  onSave?: () => void;
+}
+
+export default function ControlPanel({ onSave }: ControlPanelProps) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const { 
@@ -24,6 +28,8 @@ export default function ControlPanel() {
     setImageUrl, 
     setEditorImageUrl,
     setToast,
+    snapshot,
+    rollback,
   } = useStore();
   const hasImage = imageUrl || editorImageUrl;
   const previewUrl = editorImageUrl || imageUrl;
@@ -39,32 +45,41 @@ export default function ControlPanel() {
     setSaving(true);
     try {
       const safeImageUrl = imageUrl || undefined;
-    const safeEditorImageUrl = editorImageUrl || undefined;
-    
-    await createDesign({
-      name,
-      caseColor,
-      caseFinish,
-      imageUrl: safeImageUrl,
-      editorImageUrl: safeEditorImageUrl,
-      positionX,
-      positionY,
-      scale,
-      rotation,
-      opacity,
-    });
+      const safeEditorImageUrl = editorImageUrl || undefined;
+      
+      await createDesign({
+        name,
+        caseColor,
+        caseFinish,
+        imageUrl: safeImageUrl,
+        editorImageUrl: safeEditorImageUrl,
+        positionX,
+        positionY,
+        scale,
+        rotation,
+        opacity,
+      });
       setToast('Design saved!');
+      if (onSave) onSave();
       router.push('/designs');
     } catch (error) {
       setToast('Failed to save design');
     } finally {
       setSaving(false);
     }
-  }, [hasImage, imageUrl, editorImageUrl, caseColor, caseFinish, positionX, positionY, scale, rotation, opacity, router, setToast]);
+  }, [hasImage, imageUrl, editorImageUrl, caseColor, caseFinish, positionX, positionY, scale, rotation, opacity, router, setToast, onSave]);
 
   const handleRemove = () => {
     setImageUrl(null);
     setEditorImageUrl(null);
+  };
+
+  const handleCancel = () => {
+    if (onSave) {
+      onSave();
+    } else {
+      router.push('/designs');
+    }
   };
 
   return (
@@ -88,8 +103,11 @@ export default function ControlPanel() {
           </div>
           
           <div className="panel-section">
+            <button className="btn btn-secondary" onClick={handleCancel}>
+              Cancel
+            </button>
             <button className="btn btn-primary" onClick={handleSaveAs} disabled={saving}>
-              {saving ? 'Saving...' : 'Save as Design'}
+              {saving ? 'Saving...' : 'Save Design'}
             </button>
           </div>
         </>

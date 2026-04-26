@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getDesigns, deleteDesign } from '../actions';
+import { getDesigns, deleteDesign, createDesign } from '../actions';
 import { useDesignStore } from './store';
 
-export default function DesignsPage() {
+export default function HomePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);

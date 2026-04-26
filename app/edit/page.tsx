@@ -28,18 +28,22 @@ export default function EditImagePage() {
     setOpacity,
     setEditorImageUrl,
     setImageUrl,
+    snapshot,
+    rollback,
   } = useStore();
 
   useEffect(() => {
     const srcUrl = imageUrl || editorImageUrl;
     if (!srcUrl) {
-      router.push('/');
+      router.push('/designs');
       return;
     }
     const image = new Image();
     image.onload = () => setImg(image);
     image.src = srcUrl;
-  }, [imageUrl, editorImageUrl, router]);
+    
+    snapshot();
+  }, [imageUrl, editorImageUrl, router, snapshot]);
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -99,15 +103,10 @@ export default function EditImagePage() {
     draw();
   }, [draw]);
 
-  const handleApply = () => {
-    draw();
-    router.push('/');
-  };
-
   const handleCancel = () => {
     setImageUrl(null);
     setEditorImageUrl(null);
-    router.push('/');
+    router.push('/designs');
   };
 
   const handleReset = () => {
@@ -118,13 +117,25 @@ export default function EditImagePage() {
     setOpacity(1);
   };
 
+  const handleRollback = () => {
+    rollback();
+    draw();
+  };
+
+  const handleSave = () => {
+    draw();
+    router.push('/designs');
+  };
+
   return (
     <div className="edit-page">
       <header className="edit-header">
         <h1>Edit Design</h1>
         <div className="edit-actions">
+          <button className="btn btn-secondary" onClick={handleRollback}>Rollback</button>
+          <button className="btn btn-secondary" onClick={handleReset}>Reset</button>
           <button className="btn btn-secondary" onClick={handleCancel}>Cancel</button>
-          <button className="btn" onClick={handleApply}>Done</button>
+          <button className="btn" onClick={handleSave}>Save</button>
         </div>
       </header>
       
