@@ -1,0 +1,221 @@
+'use client';
+
+import { useRef, useEffect, useState, Suspense } from 'react';
+import { Canvas } from '@react-three/fiber';
+import { OrbitControls, Environment, Center } from '@react-three/drei';
+import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
+import { 
+  MeshStandardMaterial,
+  TextureLoader,
+  SRGBColorSpace,
+  NearestFilter,
+} from 'three';
+import { useStore } from '../store';
+import * as THREE from 'three';
+
+function PhoneCase() {
+  const groupRef = useRef<THREE.Group>(null);
+  const { 
+    imageUrl, 
+    scale, 
+    opacity,
+    caseColor,
+    caseFinish,
+    positionX, 
+    positionY, 
+    rotation,
+  } = useStore();
+  const [modelLoaded, setModelLoaded] = useState(false);
+  const [geometry, setGeometry] = useState<THREE.BufferGeometry | null>(null);
+  const [geometryBounds, setGeometryBounds] = useState<{min: THREE.Vector3, max: THREE.Vector3, backZ: number} | null>(null);
+  const [texture, setTexture] = useState<THREE.Texture | null>(null);
+
+  const materialProps = {
+    glossy: { metalness: 0.0, roughness: 0.1, clearcoat: 0.8, clearcoatRoughness: 0.1 },
+    matte: { metalness: 0.0, roughness: 0.95, clearcoat: 0.0, clearcoatRoughness: 0.5 },
+    rubber: { metalness: 0.0, roughness: 1.0, clearcoat: 0.0, clearcoatRoughness: 1.0 },
+  }[caseFinish] || { metalness: 0.0, roughness: 0.1, clearcoat: 0.8, clearcoatRoughness: 0.1 };
+
+  useEffect(() => {
+    const loadSTL = async () => {
+      try {
+        const response = await fetch('/iphone-17.stl');
+        if (!response.ok) return;
+        
+        const buffer = await response.arrayBuffer();
+        const loader = new STLLoader();
+        const geo = loader.parse(buffer);
+        
+        if (!geo) return;
+        
+        geo.computeVertexNormals();
+        
+        const center = new THREE.Vector3();
+        geo.computeBoundingBox();
+        
+        if (geo.boundingBox) {
+          geo.boundingBox.getCenter(center);
+          geo.translate(-center.x, -center.y, -center.z);
+          
+          const maxDim = Math.max(
+            geo.boundingBox.max.x - geo.boundingBox.min.x,
+            geo.boundingBox.max.y - geo.boundingBox.min.y,
+            geo.boundingBox.max.z - geo.boundingBox.min.z
+          );
+          const scaleFactor = 100 / maxDim;
+          geo.scale(scaleFactor, scaleFactor, scaleFactor);
+          geo.computeBoundingBox();
+        }
+        
+        const bounds = geo.boundingBox;
+        if (!bounds) {
+          setGeometry(geo);
+          setModelLoaded(true);
+          return;
+        }
+        
+        const backZ = bounds.min.z + 0.5;
+        
+        setGeometry(geo);
+        setGeometryBounds({ min: bounds.min, max: bounds.max, backZ });
+        setModelLoaded(true);
+      } catch (error) {
+        console.error('Failed to load STL:', error);
+        setModelLoaded(true);
+      }
+    };
+    
+    loadSTL();
+  }, []);
+
+  useEffect(() => {
+    if (!imageUrl) {
+      setTexture(null);
+      return;
+    }
+    
+    const loader = new TextureLoader();
+    loader.load(
+      imageUrl,
+      (tex) => {
+        tex.colorSpace = SRGBColorSpace;
+        tex.minFilter = NearestFilter;
+        tex.magFilter = NearestFilter;
+        setTexture(tex);
+      },
+      undefined,
+      (error) => console.error('Failed to load texture:', error)
+    );
+  }, [imageUrl]);
+
+  if (!modelLoaded) {
+    return (
+      <group ref={groupRef}>
+        <mesh>
+          <boxGeometry args={[60, 120, 10]} />
+          <meshStandardMaterial color="#333333" />
+        </mesh>
+      </group>
+    );
+  }
+
+  return (
+    <group ref={groupRef}>
+      {geometry && (
+        <mesh geometry={geometry}>
+          <meshPhysicalMaterial
+            color={caseColor}
+            metalness={materialProps.metalness}
+            roughness={materialProps.roughness}
+            clearcoat={materialProps.clearcoat}
+            clearcoatRoughness={materialProps.clearcoatRoughness}
+          />
+        </mesh>
+      )}
+      
+      {texture && geometryBounds && (
+        <mesh 
+          position={[
+            positionX, 
+            positionY, 
+            geometryBounds.backZ
+          ]}
+          rotation={[0, 0, 0]}
+        >
+          <planeGeometry args={[
+            (geometryBounds.max.x - geometryBounds.min.x) * scale,
+            (geometryBounds.max.y - geometryBounds.min.y) * scale
+          ]} />
+          <meshPhysicalMaterial
+            map={texture}
+            transparent={true}
+            opacity={opacity}
+            roughness={materialProps.roughness}
+            metalness={materialProps.metalness}
+            clearcoat={materialProps.clearcoat}
+            clearcoatRoughness={materialProps.clearcoatRoughness}
+          />
+        </mesh>
+      )}
+    </group>
+  );
+}
+
+function Lights() {
+  return (
+    <>
+      <ambientLight intensity={0.7} />
+      <directionalLight position={[5, 5, 5]} intensity={0.8} castShadow />
+      <directionalLight position={[-5, 3, -5]} intensity={0.3} />
+      <pointLight position={[0, -5, 5]} intensity={0.2} color="#ffffff" />
+    </>
+  );
+}
+
+function Scene() {
+  const { autoRotate } = useStore();
+
+  return (
+    <>
+      <Lights />
+      <Center>
+        <PhoneCase />
+      </Center>
+      <OrbitControls
+        autoRotate={autoRotate}
+        autoRotateSpeed={2}
+        enablePan={true}
+        enableZoom={true}
+        enableRotate={true}
+        minDistance={50}
+        maxDistance={300}
+        dampingFactor={0.05}
+        enableDamping
+      />
+      <Environment preset="city" background={false} />
+    </>
+  );
+}
+
+export default function Viewer({ onResetView }: { onResetView: () => void }) {
+  return (
+    <div className="viewer-container">
+      <div className="viewer-glow" />
+      <Canvas
+        className="viewer-canvas"
+        camera={{ position: [0, 0, 150], fov: 45 }}
+        gl={{ 
+          preserveDrawingBuffer: true,
+          antialias: true,
+          toneMapping: THREE.ACESFilmicToneMapping,
+          outputColorSpace: THREE.SRGBColorSpace
+        }}
+        dpr={[1, 2]}
+      >
+        <Suspense fallback={null}>
+          <Scene />
+        </Suspense>
+      </Canvas>
+    </div>
+  );
+}
