@@ -21,14 +21,11 @@ function PhoneCase() {
     opacity,
     caseColor,
     caseFinish,
-    positionX, 
-    positionY, 
-    rotation,
   } = useStore();
   const [modelLoaded, setModelLoaded] = useState(false);
   const [geometry, setGeometry] = useState<THREE.BufferGeometry | null>(null);
-  const [geometryBounds, setGeometryBounds] = useState<{min: THREE.Vector3, max: THREE.Vector3, backZ: number} | null>(null);
   const [texture, setTexture] = useState<THREE.Texture | null>(null);
+  const [stickerGeometry, setStickerGeometry] = useState<THREE.BufferGeometry | null>(null);
 
   const materialProps = {
     glossy: { metalness: 0.0, roughness: 0.1, clearcoat: 0.8, clearcoatRoughness: 0.1 },
@@ -67,17 +64,11 @@ function PhoneCase() {
           geo.computeBoundingBox();
         }
         
-        const bounds = geo.boundingBox;
-        if (!bounds) {
-          setGeometry(geo);
-          setModelLoaded(true);
-          return;
-        }
-        
-        const backZ = bounds.min.z + 0.5;
-        
         setGeometry(geo);
-        setGeometryBounds({ min: bounds.min, max: bounds.max, backZ });
+        
+        const stickerGeo = createBackfaceSticker(geo, scale);
+        setStickerGeometry(stickerGeo);
+        
         setModelLoaded(true);
       } catch (error) {
         console.error('Failed to load STL:', error);
@@ -87,6 +78,13 @@ function PhoneCase() {
     
     loadSTL();
   }, []);
+
+  useEffect(() => {
+    if (geometry && scale) {
+      const stickerGeo = createBackfaceSticker(geometry, scale);
+      setStickerGeometry(stickerGeo);
+    }
+  }, [geometry, scale]);
 
   useEffect(() => {
     if (!imageUrl) {
@@ -133,19 +131,8 @@ function PhoneCase() {
         </mesh>
       )}
       
-      {texture && geometryBounds && (
-        <mesh 
-          position={[
-            positionX, 
-            positionY, 
-            geometryBounds.backZ
-          ]}
-          rotation={[0, 0, 0]}
-        >
-          <planeGeometry args={[
-            (geometryBounds.max.x - geometryBounds.min.x) * scale,
-            (geometryBounds.max.y - geometryBounds.min.y) * scale
-          ]} />
+      {stickerGeometry && texture && (
+        <mesh geometry={stickerGeometry}>
           <meshPhysicalMaterial
             map={texture}
             transparent={true}
@@ -159,6 +146,67 @@ function PhoneCase() {
       )}
     </group>
   );
+}
+
+function createBackfaceSticker(
+  originalGeo: THREE.BufferGeometry,
+  scale: number
+): THREE.BufferGeometry {
+  const positions = originalGeo.attributes.position;
+  const normals = originalGeo.attributes.normal;
+  
+  if (!positions || !normals) {
+    return new THREE.BufferGeometry();
+  }
+  
+  originalGeo.computeBoundingBox();
+  const bounds = originalGeo.boundingBox;
+  
+  if (!bounds) {
+    return new THREE.BufferGeometry();
+  }
+  
+  const stickerVertices: number[] = [];
+  const stickerNormals: number[] = [];
+  const stickerUvs: number[] = [];
+  const stickerIndices: number[] = [];
+  
+  const width = bounds.max.x - bounds.min.x;
+  const height = bounds.max.y - bounds.min.y;
+  const minX = bounds.min.x;
+  const minY = bounds.min.y;
+  
+  const backZ = bounds.min.z + (bounds.max.z - bounds.min.z) * 0.15;
+  
+  for (let i = 0; i < positions.count; i += 3) {
+    const z0 = positions.getZ(i);
+    const z1 = positions.getZ(i + 1);
+    const z2 = positions.getZ(i + 2);
+    
+    const avgZ = (z0 + z1 + z2) / 3;
+    
+    if (avgZ < backZ) {
+      for (let j = 0; j < 3; j++) {
+        const idx = i + j;
+        stickerVertices.push(positions.getX(idx), positions.getY(idx), positions.getZ(idx));
+        stickerNormals.push(normals.getX(idx), normals.getY(idx), normals.getZ(idx));
+        
+        const u = (positions.getX(idx) - minX) / width;
+        const v = (positions.getY(idx) - minY) / height;
+        stickerUvs.push(u, v);
+      }
+      stickerIndices.push(i, i + 1, i + 2);
+    }
+  }
+  
+  const stickerGeo = new THREE.BufferGeometry();
+  stickerGeo.setAttribute('position', new THREE.Float32BufferAttribute(stickerVertices, 3));
+  stickerGeo.setAttribute('normal', new THREE.Float32BufferAttribute(stickerNormals, 3));
+  stickerGeo.setAttribute('uv', new THREE.Float32BufferAttribute(stickerUvs, 2));
+  stickerGeo.setIndex(stickerIndices);
+  stickerGeo.computeVertexNormals();
+  
+  return stickerGeo;
 }
 
 function Lights() {
