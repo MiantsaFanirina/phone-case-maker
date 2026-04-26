@@ -265,7 +265,7 @@ function createBackfaceSticker(
           const nz = normals.getZ(idx);
           
           const u = 1 - (x - minX) / width;
-          const v = 1 - (y - minY) / height;
+          const v = (y - minY) / height;
           
           stickerVertices.push(x, y, z);
           stickerNormals.push(nx, ny, nz);
