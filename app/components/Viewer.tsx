@@ -166,6 +166,8 @@ function createBackfaceSticker(
     return new THREE.BufferGeometry();
   }
   
+  console.log('STL bounds Z:', bounds.min.z, 'to', bounds.max.z);
+  
   const stickerVertices: number[] = [];
   const stickerNormals: number[] = [];
   const stickerUvs: number[] = [];
@@ -176,16 +178,20 @@ function createBackfaceSticker(
   const minX = bounds.min.x;
   const minY = bounds.min.y;
   
-  const backZ = bounds.min.z + (bounds.max.z - bounds.min.z) * 0.15;
+  let triCount = 0;
   
   for (let i = 0; i < positions.count; i += 3) {
     const z0 = positions.getZ(i);
     const z1 = positions.getZ(i + 1);
     const z2 = positions.getZ(i + 2);
     
-    const avgZ = (z0 + z1 + z2) / 3;
+    const nz0 = normals.getZ(i);
+    const nz1 = normals.getZ(i + 1);
+    const nz2 = normals.getZ(i + 2);
     
-    if (avgZ < backZ) {
+    const isBackFace = nz0 < -0.3 || nz1 < -0.3 || nz2 < -0.3;
+    
+    if (isBackFace) {
       for (let j = 0; j < 3; j++) {
         const idx = i + j;
         stickerVertices.push(positions.getX(idx), positions.getY(idx), positions.getZ(idx));
@@ -196,6 +202,22 @@ function createBackfaceSticker(
         stickerUvs.push(u, v);
       }
       stickerIndices.push(i, i + 1, i + 2);
+      triCount++;
+    }
+  }
+  
+  console.log('Back triangles found:', triCount);
+  
+  if (stickerVertices.length === 0) {
+    console.log('No back faces, using all triangles');
+    for (let i = 0; i < positions.count; i++) {
+      stickerVertices.push(positions.getX(i), positions.getY(i), positions.getZ(i));
+      stickerNormals.push(normals.getX(i), normals.getY(i), normals.getZ(i));
+      
+      const u = (positions.getX(i) - minX) / width;
+      const v = (positions.getY(i) - minY) / height;
+      stickerUvs.push(u, v);
+      stickerIndices.push(i);
     }
   }
   
