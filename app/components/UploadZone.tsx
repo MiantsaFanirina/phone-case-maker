@@ -3,9 +3,11 @@
 import { useState, useRef, useCallback } from 'react';
 import { useStore } from '../store';
 
-interface UploadZoneProps {}
+interface UploadZoneProps {
+  onOpenEditor: () => void;
+}
 
-export default function UploadZone({}: UploadZoneProps) {
+export default function UploadZone({ onOpenEditor }: UploadZoneProps) {
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { imageUrl, setImageUrl, setToast } = useStore();
@@ -27,9 +29,10 @@ export default function UploadZone({}: UploadZoneProps) {
     reader.onload = (e) => {
       const result = e.target?.result as string;
       setImageUrl(result);
+      onOpenEditor();
     };
     reader.readAsDataURL(file);
-  }, [setImageUrl, setToast]);
+  }, [setImageUrl, setToast, onOpenEditor]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();

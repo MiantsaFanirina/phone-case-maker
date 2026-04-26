@@ -5,13 +5,15 @@ import AdjustmentSliders from './AdjustmentSliders';
 import ExportPanel from './ExportPanel';
 import CaseSettings from './CaseSettings';
 
-interface ControlPanelProps {}
+interface ControlPanelProps {
+  onOpenEditor: () => void;
+}
 
-export default function ControlPanel({}: ControlPanelProps) {
+export default function ControlPanel({ onOpenEditor }: ControlPanelProps) {
   return (
     <div className="control-panel">
       <CaseSettings />
-      <UploadZone />
+      <UploadZone onOpenEditor={onOpenEditor} />
       <AdjustmentSliders />
       <ExportPanel />
     </div>

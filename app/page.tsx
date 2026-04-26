@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import { useStore } from './store';
 import ControlPanel from './components/ControlPanel';
+import ImageEditor from './components/ImageEditor';
 
 const Viewer = dynamic(() => import('./components/Viewer'), { 
   ssr: false,
@@ -20,6 +21,7 @@ const Viewer = dynamic(() => import('./components/Viewer'), {
 export default function Home() {
   const { autoRotate, setAutoRotate, toast, setToast, imageUrl, setImageUrl } = useStore();
   const [isClient, setIsClient] = useState(false);
+  const [showEditor, setShowEditor] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -36,6 +38,14 @@ export default function Home() {
   const handleClearImage = useCallback(() => {
     setImageUrl(null);
   }, [setImageUrl]);
+
+  const handleOpenEditor = useCallback(() => {
+    setShowEditor(true);
+  }, []);
+
+  const handleCloseEditor = useCallback(() => {
+    setShowEditor(false);
+  }, []);
 
   return (
     <div className="app">
@@ -64,8 +74,10 @@ export default function Home() {
         {isClient && (
           <Viewer onResetView={handleResetView} />
         )}
-        <ControlPanel />
+        <ControlPanel onOpenEditor={handleOpenEditor} />
       </main>
+
+      {showEditor && <ImageEditor onClose={handleCloseEditor} />}
 
       {toast && (
         <div className="toast" onClick={() => setToast(null)}>

@@ -16,7 +16,8 @@ import * as THREE from 'three';
 function PhoneCase() {
   const groupRef = useRef<THREE.Group>(null);
   const { 
-    imageUrl, 
+    imageUrl,
+    editorImageUrl,
     scale, 
     opacity,
     caseColor,
@@ -87,14 +88,15 @@ function PhoneCase() {
   }, [geometry, scale]);
 
   useEffect(() => {
-    if (!imageUrl) {
+    const urlToLoad = editorImageUrl || imageUrl;
+    if (!urlToLoad) {
       setTexture(null);
       return;
     }
     
     const loader = new TextureLoader();
     loader.load(
-      imageUrl,
+      urlToLoad,
       (tex) => {
         tex.colorSpace = SRGBColorSpace;
         tex.minFilter = NearestFilter;
@@ -104,7 +106,7 @@ function PhoneCase() {
       undefined,
       (error) => console.error('Failed to load texture:', error)
     );
-  }, [imageUrl]);
+  }, [imageUrl, editorImageUrl]);
 
   if (!modelLoaded) {
     return (
@@ -176,9 +178,6 @@ function createBackfaceSticker(
   const minX = bounds.min.x;
   const minY = bounds.min.y;
   
-  const centerX = (bounds.max.x + bounds.min.x) / 2;
-  const centerY = (bounds.max.y + bounds.min.y) / 2;
-  
   let triCount = 0;
   let vertexCount = 0;
   
@@ -190,23 +189,6 @@ function createBackfaceSticker(
     const isBackFace = nz0 < -0.5 || nz1 < -0.5 || nz2 < -0.5;
     
     if (isBackFace) {
-      const x0 = positions.getX(i);
-      const y0 = positions.getY(i);
-      const x1 = positions.getX(i + 1);
-      const y1 = positions.getY(i + 1);
-      const x2 = positions.getX(i + 2);
-      const y2 = positions.getY(i + 2);
-      
-      const avgX = (x0 + x1 + x2) / 3;
-      const avgY = (y0 + y1 + y2) / 3;
-      
-      const distFromCenter = Math.sqrt(
-        Math.pow(avgX - centerX, 2) + Math.pow(avgY - centerY, 2)
-      );
-      
-      const maxRadius = Math.min(width, height) * 0.42;
-      
-      if (distFromCenter < maxRadius) {
         for (let j = 0; j < 3; j++) {
           const idx = i + j;
           const x = positions.getX(idx);
@@ -228,7 +210,6 @@ function createBackfaceSticker(
         }
         triCount++;
       }
-    }
   }
   
   console.log('Filtered back triangles:', triCount);

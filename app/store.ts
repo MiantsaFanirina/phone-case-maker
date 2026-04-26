@@ -2,6 +2,7 @@ import { create } from 'zustand';
 
 interface DecalState {
   imageUrl: string | null;
+  editorImageUrl: string | null;
   positionX: number;
   positionY: number;
   scale: number;
@@ -17,6 +18,7 @@ interface DecalState {
   caseFinish: string;
   
   setImageUrl: (url: string | null) => void;
+  setEditorImageUrl: (url: string | null) => void;
   setPositionX: (value: number) => void;
   setPositionY: (value: number) => void;
   setScale: (value: number) => void;
@@ -35,6 +37,7 @@ interface DecalState {
 
 export const useStore = create<DecalState>((set) => ({
   imageUrl: null,
+  editorImageUrl: null,
   positionX: 0,
   positionY: 0,
   scale: 0.7,
@@ -50,6 +53,7 @@ export const useStore = create<DecalState>((set) => ({
   caseFinish: 'glossy',
   
   setImageUrl: (url) => set({ imageUrl: url }),
+  setEditorImageUrl: (url) => set({ editorImageUrl: url }),
   setPositionX: (value) => set({ positionX: value }),
   setPositionY: (value) => set({ positionY: value }),
   setScale: (value) => set({ scale: value }),
@@ -65,6 +69,7 @@ export const useStore = create<DecalState>((set) => ({
   setCaseFinish: (finish) => set({ caseFinish: finish }),
   reset: () => set({
     imageUrl: null,
+    editorImageUrl: null,
     positionX: 0,
     positionY: 0,
     scale: 0.7,
