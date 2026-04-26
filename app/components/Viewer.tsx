@@ -180,29 +180,37 @@ function createBackfaceSticker(
   let vertexCount = 0;
   
   for (let i = 0; i < positions.count; i += 3) {
-    for (let j = 0; j < 3; j++) {
-      const idx = i + j;
-      const x = positions.getX(idx);
-      const y = positions.getY(idx);
-      const z = positions.getZ(idx);
-      
-      const nx = normals.getX(idx);
-      const ny = normals.getY(idx);
-      const nz = normals.getZ(idx);
-      
-      const u = (x - minX) / width;
-      const v = (y - minY) / height;
-      
-      stickerVertices.push(x, y, z);
-      stickerNormals.push(nx, ny, nz);
-      stickerUvs.push(u, v);
-      stickerIndices.push(vertexCount);
-      vertexCount++;
+    const nz0 = normals.getZ(i);
+    const nz1 = normals.getZ(i + 1);
+    const nz2 = normals.getZ(i + 2);
+    
+    const isBackFace = nz0 < -0.5 || nz1 < -0.5 || nz2 < -0.5;
+    
+    if (isBackFace) {
+      for (let j = 0; j < 3; j++) {
+        const idx = i + j;
+        const x = positions.getX(idx);
+        const y = positions.getY(idx);
+        const z = positions.getZ(idx);
+        
+        const nx = normals.getX(idx);
+        const ny = normals.getY(idx);
+        const nz = normals.getZ(idx);
+        
+        const u = (x - minX) / width;
+        const v = (y - minY) / height;
+        
+        stickerVertices.push(x, y, z);
+        stickerNormals.push(nx, ny, nz);
+        stickerUvs.push(u, v);
+        stickerIndices.push(vertexCount);
+        vertexCount++;
+      }
+      triCount++;
     }
-    triCount++;
   }
   
-  console.log('All triangles mapped:', triCount);
+  console.log('Back face triangles:', triCount);
   
   const stickerGeo = new THREE.BufferGeometry();
   stickerGeo.setAttribute('position', new THREE.Float32BufferAttribute(stickerVertices, 3));
