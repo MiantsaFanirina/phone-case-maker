@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useStore } from '../store';
+import { createDesign } from '../actions';
 import ControlPanel from '../components/ControlPanel';
 
 const Viewer = dynamic(() => import('../components/Viewer'), { 
@@ -28,6 +29,35 @@ export default function CreatePage() {
     setIsClient(true);
   }, []);
 
+  const hasImage = imageUrl || editorImageUrl;
+
+  const handleSave = useCallback(async () => {
+    if (!hasImage) return;
+    
+    const name = prompt('Enter a name for this design:');
+    if (!name) return;
+    
+    const state = useStore.getState();
+    const safeImageUrl = state.imageUrl || undefined;
+    const safeEditorImageUrl = state.editorImageUrl || undefined;
+    
+    await createDesign({
+      name,
+      caseColor: state.caseColor,
+      caseFinish: state.caseFinish,
+      imageUrl: safeImageUrl,
+      editorImageUrl: safeEditorImageUrl,
+      positionX: state.positionX,
+      positionY: state.positionY,
+      scale: state.scale,
+      rotation: state.rotation,
+      opacity: state.opacity,
+    });
+    
+    state.setToast('Design saved!');
+    router.push('/designs');
+  }, [hasImage, router]);
+
   const handleResetView = useCallback(() => {
   }, []);
 
@@ -40,20 +70,26 @@ export default function CreatePage() {
     setEditorImageUrl(null);
   }, [setImageUrl, setEditorImageUrl]);
 
-  const handleSave = useCallback(() => {
-    router.push('/designs');
-  }, [router]);
-
-  const hasImage = imageUrl || editorImageUrl;
-
   return (
     <div className="app">
       <header className="header">
         <div className="logo">Create Design</div>
         <div className="header-actions">
-          <Link href="/designs" className="btn btn-secondary">
-            My Designs
-          </Link>
+          {hasImage && (
+            <>
+              <button className="btn btn-primary" onClick={handleSave}>
+                Save Design
+              </button>
+              <Link href="/designs" className="btn btn-secondary">
+                My Designs
+              </Link>
+            </>
+          )}
+          {!hasImage && (
+            <Link href="/designs" className="btn btn-secondary">
+              My Designs
+            </Link>
+          )}
           <label className="checkbox-group">
             <input 
               type="checkbox" 

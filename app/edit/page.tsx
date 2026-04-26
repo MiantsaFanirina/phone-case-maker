@@ -28,8 +28,6 @@ export default function EditImagePage() {
     setOpacity,
     setEditorImageUrl,
     setImageUrl,
-    snapshot,
-    rollback,
   } = useStore();
 
   useEffect(() => {
@@ -41,9 +39,7 @@ export default function EditImagePage() {
     const image = new Image();
     image.onload = () => setImg(image);
     image.src = srcUrl;
-    
-    snapshot();
-  }, [imageUrl, editorImageUrl, router, snapshot]);
+  }, [imageUrl, editorImageUrl, router]);
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -117,11 +113,6 @@ export default function EditImagePage() {
     setOpacity(1);
   };
 
-  const handleRollback = () => {
-    rollback();
-    draw();
-  };
-
   const handleSave = () => {
     draw();
     router.push('/designs');
@@ -132,7 +123,6 @@ export default function EditImagePage() {
       <header className="edit-header">
         <h1>Edit Design</h1>
         <div className="edit-actions">
-          <button className="btn btn-secondary" onClick={handleRollback}>Rollback</button>
           <button className="btn btn-secondary" onClick={handleReset}>Reset</button>
           <button className="btn btn-secondary" onClick={handleCancel}>Cancel</button>
           <button className="btn" onClick={handleSave}>Save</button>
