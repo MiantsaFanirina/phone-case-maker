@@ -32,10 +32,8 @@ export default function ControlPanel({ onOpenEditor }: ControlPanelProps) {
   const handleOpenEditor = useCallback(() => {
     if (onOpenEditor) {
       onOpenEditor();
-    } else {
-      router.push('/edit');
     }
-  }, [onOpenEditor, router]);
+  }, [onOpenEditor]);
 
   const handleRemove = () => {
     setImageUrl(null);
