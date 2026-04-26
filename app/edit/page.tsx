@@ -93,14 +93,20 @@ export default function EditImagePage() {
 
     const dataUrl = canvas.toDataURL('image/png');
     setEditorImageUrl(dataUrl);
-}, [img, caseColor, positionX, positionY, scale, rotation, opacity, setEditorImageUrl]);
+  }, [img, caseColor, positionX, positionY, scale, rotation, opacity, setEditorImageUrl]);
 
-  const handleDone = () => {
+  useEffect(() => {
+    draw();
+  }, [draw]);
+
+  const handleApply = () => {
     draw();
     router.push('/');
   };
 
   const handleCancel = () => {
+    setImageUrl(null);
+    setEditorImageUrl(null);
     router.push('/');
   };
 
@@ -115,11 +121,10 @@ export default function EditImagePage() {
   return (
     <div className="edit-page">
       <header className="edit-header">
-        <h1>Edit Image</h1>
+        <h1>Edit Design</h1>
         <div className="edit-actions">
           <button className="btn btn-secondary" onClick={handleCancel}>Cancel</button>
-          <button className="btn" onClick={handleReset}>Reset</button>
-          <button className="btn" onClick={handleDone}>Done</button>
+          <button className="btn" onClick={handleApply}>Done</button>
         </div>
       </header>
       
