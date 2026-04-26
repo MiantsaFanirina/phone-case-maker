@@ -33,7 +33,7 @@ export default function EditImagePage() {
   useEffect(() => {
     const srcUrl = imageUrl || editorImageUrl;
     if (!srcUrl) {
-      router.push('/designs');
+      router.push('/');
       return;
     }
     const image = new Image();
