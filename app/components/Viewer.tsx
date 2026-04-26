@@ -166,8 +166,6 @@ function createBackfaceSticker(
     return new THREE.BufferGeometry();
   }
   
-  console.log('STL bounds Z:', bounds.min.z, 'to', bounds.max.z);
-  
   const stickerVertices: number[] = [];
   const stickerNormals: number[] = [];
   const stickerUvs: number[] = [];
@@ -179,47 +177,32 @@ function createBackfaceSticker(
   const minY = bounds.min.y;
   
   let triCount = 0;
+  let vertexCount = 0;
   
   for (let i = 0; i < positions.count; i += 3) {
-    const z0 = positions.getZ(i);
-    const z1 = positions.getZ(i + 1);
-    const z2 = positions.getZ(i + 2);
-    
-    const nz0 = normals.getZ(i);
-    const nz1 = normals.getZ(i + 1);
-    const nz2 = normals.getZ(i + 2);
-    
-    const isBackFace = nz0 < -0.3 || nz1 < -0.3 || nz2 < -0.3;
-    
-    if (isBackFace) {
-      for (let j = 0; j < 3; j++) {
-        const idx = i + j;
-        stickerVertices.push(positions.getX(idx), positions.getY(idx), positions.getZ(idx));
-        stickerNormals.push(normals.getX(idx), normals.getY(idx), normals.getZ(idx));
-        
-        const u = (positions.getX(idx) - minX) / width;
-        const v = (positions.getY(idx) - minY) / height;
-        stickerUvs.push(u, v);
-      }
-      stickerIndices.push(i, i + 1, i + 2);
-      triCount++;
-    }
-  }
-  
-  console.log('Back triangles found:', triCount);
-  
-  if (stickerVertices.length === 0) {
-    console.log('No back faces, using all triangles');
-    for (let i = 0; i < positions.count; i++) {
-      stickerVertices.push(positions.getX(i), positions.getY(i), positions.getZ(i));
-      stickerNormals.push(normals.getX(i), normals.getY(i), normals.getZ(i));
+    for (let j = 0; j < 3; j++) {
+      const idx = i + j;
+      const x = positions.getX(idx);
+      const y = positions.getY(idx);
+      const z = positions.getZ(idx);
       
-      const u = (positions.getX(i) - minX) / width;
-      const v = (positions.getY(i) - minY) / height;
+      const nx = normals.getX(idx);
+      const ny = normals.getY(idx);
+      const nz = normals.getZ(idx);
+      
+      const u = (x - minX) / width;
+      const v = (y - minY) / height;
+      
+      stickerVertices.push(x, y, z);
+      stickerNormals.push(nx, ny, nz);
       stickerUvs.push(u, v);
-      stickerIndices.push(i);
+      stickerIndices.push(vertexCount);
+      vertexCount++;
     }
+    triCount++;
   }
+  
+  console.log('All triangles mapped:', triCount);
   
   const stickerGeo = new THREE.BufferGeometry();
   stickerGeo.setAttribute('position', new THREE.Float32BufferAttribute(stickerVertices, 3));
