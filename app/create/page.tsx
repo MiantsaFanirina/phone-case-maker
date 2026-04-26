@@ -42,9 +42,6 @@ export default function CreatePage() {
     }
   }, [designName]);
 
-  const handleDesignNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setDesignName(e.target.value);
-  };
 
   const hasImage = imageUrl || editorImageUrl;
 
@@ -53,7 +50,7 @@ export default function CreatePage() {
       setToast('Please upload an image first');
       return;
     }
-    if (!designName) {
+    if (!designName.trim()) {
       setToast('Please enter a design name');
       return;
     }
@@ -62,12 +59,14 @@ export default function CreatePage() {
     
     try {
       const state = useStore.getState();
+      const safeImageUrl = state.imageUrl || undefined;
       const safeEditorImageUrl = state.editorImageUrl || undefined;
       
       await createDesign({
-        name: designName,
+        name: designName.trim(),
         caseColor: state.caseColor,
         caseFinish: state.caseFinish,
+        imageUrl: safeImageUrl,
         editorImageUrl: safeEditorImageUrl,
         positionX: state.positionX,
         positionY: state.positionY,
@@ -77,6 +76,8 @@ export default function CreatePage() {
       });
       
       setToast('Design saved!');
+      // Clear the stored name after successful save
+      sessionStorage.removeItem('newDesignName');
     } catch (error) {
       console.error('Failed to save design:', error);
       setToast('Failed to save design');
@@ -104,18 +105,11 @@ export default function CreatePage() {
   return (
     <div className="app">
       <header className="header">
-        <div className="logo">Miantsa iPhone Case Maker</div>
+        <h1 className="page-title">Case Maker</h1>
         <div className="header-actions">
           <Link href="/designs" className="btn btn-secondary">
             My Designs
           </Link>
-          <input
-            type="text"
-            className="name-input"
-            placeholder="Design name"
-            value={designName}
-            onChange={handleDesignNameChange}
-          />
           {hasImage && (
             <button className="btn btn-primary" onClick={handleSaveDesign} disabled={saving}>
               {saving ? 'Saving...' : 'Save Design'}

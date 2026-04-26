@@ -3,6 +3,7 @@
 import { useEffect, useCallback, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStore } from '../store';
+import LoadingPage from '../components/LoadingPage';
 
 const CANVAS_WIDTH = 1200;
 const CANVAS_HEIGHT = 2400;
@@ -11,6 +12,7 @@ export default function EditImagePage() {
   const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [img, setImg] = useState<HTMLImageElement | null>(null);
+  const [loading, setLoading] = useState(true);
   
   const { 
     imageUrl,
@@ -36,8 +38,16 @@ export default function EditImagePage() {
       router.push('/create');
       return;
     }
+    setLoading(true);
     const image = new Image();
-    image.onload = () => setImg(image);
+    image.onload = () => {
+      setImg(image);
+      setLoading(false);
+    };
+    image.onerror = () => {
+      console.error('Failed to load image');
+      setLoading(false);
+    };
     image.src = srcUrl;
   }, [imageUrl, editorImageUrl, router]);
 
@@ -117,6 +127,10 @@ const draw = useCallback(() => {
     setRotation(0);
     setOpacity(1);
   };
+
+  if (loading) {
+    return <LoadingPage message="Loading editor..." />;
+  }
 
   return (
     <div className="edit-page">

@@ -112,11 +112,8 @@ function PhoneCase() {
   }, [imageUrl, editorImageUrl]);
 
   useEffect(() => {
-    if (!imageUrl && !editorImageUrl) return;
-    
-    const srcUrl = imageUrl || editorImageUrl;
-    if (!srcUrl || !geometry || !caseColor) return;
-    
+    if (!imageUrl || !geometry || !caseColor) return;
+
     const canvas = document.createElement('canvas');
     canvas.width = 1200;
     canvas.height = 2400;
@@ -170,8 +167,8 @@ function PhoneCase() {
       const dataUrl = canvas.toDataURL('image/png');
       useStore.getState().setEditorImageUrl(dataUrl);
     };
-    img.src = srcUrl;
-  }, [imageUrl, editorImageUrl, geometry, caseColor, positionX, positionY, scale, rotation]);
+    img.src = imageUrl;
+  }, [imageUrl, geometry, caseColor, positionX, positionY, scale, rotation]);
 
   if (!modelLoaded) {
     return (

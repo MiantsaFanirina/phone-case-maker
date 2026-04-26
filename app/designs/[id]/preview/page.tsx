@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { getDesign } from '../../../actions';
 import { useStore } from '../../../store';
+import LoadingPage from '../../../components/LoadingPage';
 
-const Viewer = dynamic(() => import('../../../components/Viewer'), { 
+const Viewer = dynamic(() => import('../../../components/Viewer'), {
   ssr: false,
   loading: () => (
     <div className="viewer-container">
@@ -18,11 +19,11 @@ const Viewer = dynamic(() => import('../../../components/Viewer'), {
   )
 });
 
-export default function PreviewPage() {
+function PreviewContent() {
   const router = useRouter();
   const params = useParams();
-  const [loading, setLoading] = useState(true);
-  
+  const [isInitialized, setIsInitialized] = useState(false);
+
   const {
     setImageUrl,
     setEditorImageUrl,
@@ -33,49 +34,52 @@ export default function PreviewPage() {
     setScale,
     setRotation,
     setOpacity,
+    autoRotate,
+    setAutoRotate,
   } = useStore();
 
   useEffect(() => {
-    async function load() {
-      const id = params.id as string;
-      const design = await getDesign(id);
-      
-      if (design) {
-        setCaseColor(design.caseColor);
-        setCaseFinish(design.caseFinish);
-        setImageUrl(design.imageUrl || null);
-        setEditorImageUrl(design.editorImageUrl || null);
-        setPositionX(design.positionX);
-        setPositionY(design.positionY);
-        setScale(design.scale);
-        setRotation(design.rotation);
-        setOpacity(design.opacity);
-      }
-      setLoading(false);
+    if (!isInitialized) {
+      getDesign(params.id as string).then(design => {
+        if (design) {
+          setCaseColor(design.caseColor);
+          setCaseFinish(design.caseFinish);
+          setImageUrl(design.imageUrl || null);
+          setEditorImageUrl(design.editorImageUrl || null);
+          setPositionX(design.positionX);
+          setPositionY(design.positionY);
+          setScale(design.scale);
+          setRotation(design.rotation);
+          setOpacity(design.opacity);
+          setIsInitialized(true);
+        }
+      });
     }
-    
-    if (params.id) {
-      load();
-    }
-  }, [params.id]);
+  }, [params.id, isInitialized, setCaseColor, setCaseFinish, setImageUrl, setEditorImageUrl, setPositionX, setPositionY, setScale, setRotation, setOpacity]);
+
+  const handleToggleRotate = useCallback(() => {
+    setAutoRotate(!autoRotate);
+  }, [autoRotate, setAutoRotate]);
 
   const handleBack = () => {
     router.push('/designs');
   };
 
-  if (loading) {
-    return (
-      <div className="app">
-        <div className="loading">Loading...</div>
-      </div>
-    );
-  }
-
   return (
     <div className="app">
       <header className="header">
-        <div className="logo">Preview</div>
+        <h1 className="page-title">Preview</h1>
         <div className="header-actions">
+          <label className="checkbox-group">
+            <input
+              type="checkbox"
+              className="checkbox"
+              checked={autoRotate}
+              onChange={handleToggleRotate}
+            />
+            <span className="checkbox-label"></span>
+            <span className="checkbox-text">Auto Rotate</span>
+          </label>
           <button className="btn btn-primary" onClick={handleBack}>
             Back to Designs
           </button>
@@ -86,5 +90,13 @@ export default function PreviewPage() {
         <Viewer onResetView={() => {}} />
       </main>
     </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<LoadingPage message="Loading preview..." />}>
+      <PreviewContent />
+    </Suspense>
   );
 }

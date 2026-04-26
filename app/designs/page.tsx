@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getDesigns, deleteDesign, createDesign } from '../actions';
 import { useDesignStore } from './store';
+import { useStore } from '../store';
+import LoadingPage from '../components/LoadingPage';
 
 export default function HomePage() {
   const router = useRouter();
@@ -11,6 +13,7 @@ export default function HomePage() {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [showNewDialog, setShowNewDialog] = useState(false);
   const [newName, setNewName] = useState('');
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const { designs, setDesigns } = useDesignStore();
 
   useEffect(() => {
@@ -29,6 +32,10 @@ export default function HomePage() {
   const handleCreateSubmit = () => {
     if (!newName.trim()) return;
     sessionStorage.setItem('newDesignName', newName.trim());
+    // Clear both stores before navigating to create page
+    useDesignStore.getState().setDesigns([]);
+    useDesignStore.getState().setCurrentDesign(null);
+    useStore.getState().reset();
     router.push('/create');
     setShowNewDialog(false);
     setNewName('');
@@ -43,20 +50,25 @@ export default function HomePage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this design?')) return;
-    setDeleting(id);
-    await deleteDesign(id);
+    setDeleteConfirmId(id);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteConfirmId) return;
+    setDeleting(deleteConfirmId);
+    await deleteDesign(deleteConfirmId);
     const data = await getDesigns();
     setDesigns(data as any);
     setDeleting(null);
+    setDeleteConfirmId(null);
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteConfirmId(null);
   };
 
   if (loading) {
-    return (
-      <div className="designs-page">
-        <div className="designs-loading">Loading...</div>
-      </div>
-    );
+    return <LoadingPage message="Loading designs..." />;
   }
 
   return (
@@ -81,10 +93,10 @@ export default function HomePage() {
             {designs.map((design) => (
               <div key={design.id} className="design-card">
                 <div className="design-preview">
-                  {design.editorImageUrl ? (
-                    <img src={design.editorImageUrl} alt={design.name} />
-                  ) : design.imageUrl ? (
+                  {design.imageUrl ? (
                     <img src={design.imageUrl} alt={design.name} />
+                  ) : design.editorImageUrl ? (
+                    <img src={design.editorImageUrl} alt={design.name} />
                   ) : (
                     <div className="design-placeholder">No image</div>
                   )}
@@ -146,6 +158,25 @@ export default function HomePage() {
               </button>
               <button className="btn btn-primary" onClick={handleCreateSubmit}>
                 Create
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteConfirmId && (
+        <div className="dialog-overlay" onClick={handleCancelDelete}>
+          <div className="dialog dialog-sm" onClick={(e) => e.stopPropagation()}>
+            <h2>Delete Design?</h2>
+            <p className="dialog-message">
+              Are you sure you want to delete this design? This action cannot be undone.
+            </p>
+            <div className="dialog-actions">
+              <button className="btn" onClick={handleCancelDelete}>
+                Cancel
+              </button>
+              <button className="btn btn-danger" onClick={handleConfirmDelete}>
+                {deleting === deleteConfirmId ? 'Deleting...' : 'Delete'}
               </button>
             </div>
           </div>
