@@ -149,7 +149,7 @@ function PhoneCase() {
       const availableW = canvas.width - (border * 2);
       const availableH = canvas.height - (border * 2);
       
-      ctx.translate(border + availableW / 2 + positionX * 4, border + availableH / 2 + positionY * 8);
+      ctx.translate(border + availableW / 2 + positionX * 12, border + availableH / 2 + positionY * 24);
       ctx.rotate((rotation * Math.PI) / 180);
       ctx.scale(scale, scale);
       
