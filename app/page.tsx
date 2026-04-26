@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useCallback, useEffect, Suspense } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useStore } from './store';
+import { createDesign } from './actions';
 import ControlPanel from './components/ControlPanel';
 
 const Viewer = dynamic(() => import('./components/Viewer'), { 
@@ -23,10 +24,42 @@ export default function Home() {
   const router = useRouter();
   const { autoRotate, setAutoRotate, toast, setToast, imageUrl, editorImageUrl, setImageUrl, setEditorImageUrl } = useStore();
   const [isClient, setIsClient] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  const hasImage = imageUrl || editorImageUrl;
+
+  const handleSaveDesign = useCallback(async () => {
+    if (!hasImage) return;
+    
+    const name = prompt('Enter a name for this design:');
+    if (!name) return;
+    
+    setSaving(true);
+    
+    const state = useStore.getState();
+    const safeImageUrl = state.imageUrl || undefined;
+    const safeEditorImageUrl = state.editorImageUrl || undefined;
+    
+    await createDesign({
+      name,
+      caseColor: state.caseColor,
+      caseFinish: state.caseFinish,
+      imageUrl: safeImageUrl,
+      editorImageUrl: safeEditorImageUrl,
+      positionX: state.positionX,
+      positionY: state.positionY,
+      scale: state.scale,
+      rotation: state.rotation,
+      opacity: state.opacity,
+    });
+    
+    setSaving(false);
+    setToast('Design saved!');
+  }, [hasImage, setToast]);
 
   const handleResetView = useCallback(() => {
   }, []);
@@ -40,7 +73,9 @@ export default function Home() {
     setEditorImageUrl(null);
   }, [setImageUrl, setEditorImageUrl]);
 
-  const hasImage = imageUrl || editorImageUrl;
+  const handleOpenEditor = useCallback(() => {
+    router.push('/edit');
+  }, [router]);
 
   return (
     <div className="app">
@@ -50,6 +85,11 @@ export default function Home() {
           <Link href="/designs" className="btn btn-secondary">
             My Designs
           </Link>
+          {hasImage && (
+            <button className="btn btn-primary" onClick={handleSaveDesign} disabled={saving}>
+              {saving ? 'Saving...' : 'Save Design'}
+            </button>
+          )}
           <label className="checkbox-group">
             <input 
               type="checkbox" 
@@ -72,7 +112,7 @@ export default function Home() {
         {isClient && (
           <Viewer onResetView={handleResetView} />
         )}
-        <ControlPanel />
+        <ControlPanel onOpenEditor={handleOpenEditor} />
       </main>
 
       {toast && (
