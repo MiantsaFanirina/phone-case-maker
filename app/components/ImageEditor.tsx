@@ -48,7 +48,7 @@ const draw = useCallback(() => {
     if (!ctx) return;
 
     // iPhone border radius
-    const radius = 55;
+    const radius = 60;
     
     // Fill background with case color (rounded rect)
     ctx.beginPath();
@@ -107,7 +107,6 @@ const draw = useCallback(() => {
 
   const handleApply = () => {
     draw();
-    setImageUrl(null);
     onClose();
   };
 

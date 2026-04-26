@@ -22,6 +22,9 @@ function PhoneCase() {
     opacity,
     caseColor,
     caseFinish,
+    positionX,
+    positionY,
+    rotation,
   } = useStore();
   const [modelLoaded, setModelLoaded] = useState(false);
   const [geometry, setGeometry] = useState<THREE.BufferGeometry | null>(null);
@@ -107,6 +110,68 @@ function PhoneCase() {
       (error) => console.error('Failed to load texture:', error)
     );
   }, [imageUrl, editorImageUrl]);
+
+  useEffect(() => {
+    if (!imageUrl && !editorImageUrl) return;
+    
+    const srcUrl = imageUrl || editorImageUrl;
+    if (!srcUrl || !geometry || !caseColor) return;
+    
+    const canvas = document.createElement('canvas');
+    canvas.width = 400;
+    canvas.height = 800;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const radius = 60;
+    const border = 10;
+
+    const img = new Image();
+    img.onload = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      ctx.beginPath();
+      ctx.roundRect(0, 0, canvas.width, canvas.height, radius);
+      ctx.fillStyle = caseColor;
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.roundRect(0, 0, canvas.width, canvas.height, radius);
+      ctx.strokeStyle = caseColor;
+      ctx.lineWidth = border;
+      ctx.stroke();
+      
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(border, border, canvas.width - border * 2, canvas.height - border * 2, radius - border / 2);
+      ctx.clip();
+      
+      const availableW = canvas.width - (border * 2);
+      const availableH = canvas.height - (border * 2);
+      
+      ctx.translate(border + availableW / 2 + positionX * 4, border + availableH / 2 + positionY * 8);
+      ctx.rotate((rotation * Math.PI) / 180);
+      ctx.scale(scale, scale);
+      
+      const maxW = availableW * 0.8;
+      const maxH = availableH * 0.7;
+      const imgAspect = img.width / img.height;
+      
+      let drawW = maxW;
+      let drawH = maxW / imgAspect;
+      if (drawH > maxH) {
+        drawH = maxH;
+        drawW = maxH * imgAspect;
+      }
+      
+      ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
+      ctx.restore();
+
+      const dataUrl = canvas.toDataURL('image/png');
+      useStore.getState().setEditorImageUrl(dataUrl);
+    };
+    img.src = srcUrl;
+  }, [imageUrl, editorImageUrl, geometry, caseColor, positionX, positionY, scale, rotation]);
 
   if (!modelLoaded) {
     return (
