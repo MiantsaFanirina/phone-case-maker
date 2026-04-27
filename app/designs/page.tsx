@@ -75,9 +75,6 @@ export default function HomePage() {
     <div className="designs-page">
       <header className="designs-header">
         <h1>My Designs</h1>
-        <button className="btn btn-primary" onClick={handleCreate}>
-          + New Design
-        </button>
       </header>
 
       <main className="designs-main">

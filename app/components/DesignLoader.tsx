@@ -11,9 +11,6 @@ export default function DesignLoader({ message = 'Loading design ...' }: DesignL
     <div className="designs-page">
       <header className="designs-header">
         <h1>My Designs</h1>
-        <button className="btn btn-primary" disabled>
-          + New Design
-        </button>
       </header>
 
       <main className="designs-main">

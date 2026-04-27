@@ -3,16 +3,23 @@
 import { useEffect, useCallback, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStore } from '../store';
-import LoadingPage from '../components/LoadingPage';
 
 const CANVAS_WIDTH = 1200;
 const CANVAS_HEIGHT = 2400;
+
+function debounce<T extends (...args: any[]) => any>(fn: T, delay: number) {
+  const timeoutRef = { current: null as NodeJS.Timeout | null };
+  return (...args: Parameters<T>) => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => fn(...args), delay);
+  };
+}
 
 export default function EditImagePage() {
   const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [img, setImg] = useState<HTMLImageElement | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [menuOpen, setMenuOpen] = useState(false);
   
   const { 
     imageUrl,
@@ -32,24 +39,42 @@ export default function EditImagePage() {
     setImageUrl,
   } = useStore();
 
+  const debouncedSetEditorImageUrl = useCallback(
+    debounce((dataUrl: string) => {
+      setEditorImageUrl(dataUrl);
+    }, 100),
+    [setEditorImageUrl]
+  );
+
   useEffect(() => {
     const srcUrl = imageUrl || editorImageUrl;
     if (!srcUrl) {
       router.push('/create');
       return;
     }
-    setLoading(true);
     const image = new Image();
     image.onload = () => {
       setImg(image);
-      setLoading(false);
     };
     image.onerror = () => {
       console.error('Failed to load image');
-      setLoading(false);
     };
     image.src = srcUrl;
   }, [imageUrl, editorImageUrl, router]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuOpen) {
+        setMenuOpen(false);
+      }
+    }
+    if (menuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [menuOpen]);
 
 const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -101,9 +126,9 @@ const draw = useCallback(() => {
     ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
     ctx.restore();
     
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.7); // Compress to 70% quality JPEG
-    setEditorImageUrl(dataUrl);
-  }, [img, caseColor, positionX, positionY, scale, rotation, opacity, setEditorImageUrl]);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+    debouncedSetEditorImageUrl(dataUrl);
+  }, [img, caseColor, positionX, positionY, scale, rotation, opacity, debouncedSetEditorImageUrl]);
 
   useEffect(() => {
     draw();
@@ -127,10 +152,6 @@ const draw = useCallback(() => {
     setRotation(0);
     setOpacity(1);
   };
-
-  if (loading) {
-    return <LoadingPage message="Loading editor..." />;
-  }
 
   return (
     <div className="edit-page">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useState, Suspense } from 'react';
+import { useRef, useEffect, useState, Suspense, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Environment, Center } from '@react-three/drei';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
@@ -12,6 +12,14 @@ import {
 } from 'three';
 import { useStore } from '../store';
 import * as THREE from 'three';
+
+function debounce<T extends (...args: any[]) => any>(fn: T, delay: number) {
+  const timeoutRef = { current: null as NodeJS.Timeout | null };
+  return (...args: Parameters<T>) => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => fn(...args), delay);
+  };
+}
 
 function PhoneCase() {
   const groupRef = useRef<THREE.Group>(null);
@@ -90,6 +98,13 @@ function PhoneCase() {
     }
   }, [geometry, scale]);
 
+  const debouncedSetTexture = useCallback(
+    debounce((tex: THREE.Texture) => {
+      setTexture(tex);
+    }, 100),
+    []
+  );
+
   useEffect(() => {
     const urlToLoad = editorImageUrl || imageUrl;
     if (!urlToLoad) {
@@ -104,12 +119,19 @@ function PhoneCase() {
         tex.colorSpace = SRGBColorSpace;
         tex.minFilter = NearestFilter;
         tex.magFilter = NearestFilter;
-        setTexture(tex);
+        debouncedSetTexture(tex);
       },
       undefined,
       (error) => console.error('Failed to load texture:', error)
     );
-  }, [imageUrl, editorImageUrl]);
+  }, [imageUrl, editorImageUrl, debouncedSetTexture]);
+
+  const debouncedSetEditorImageUrl = useCallback(
+    debounce((dataUrl: string) => {
+      useStore.getState().setEditorImageUrl(dataUrl);
+    }, 100),
+    []
+  );
 
   useEffect(() => {
     if (!imageUrl || !geometry || !caseColor) return;
@@ -165,10 +187,10 @@ function PhoneCase() {
       ctx.restore();
 
       const dataUrl = canvas.toDataURL('image/png');
-      useStore.getState().setEditorImageUrl(dataUrl);
+      debouncedSetEditorImageUrl(dataUrl);
     };
     img.src = imageUrl;
-  }, [imageUrl, geometry, caseColor, positionX, positionY, scale, rotation]);
+  }, [imageUrl, geometry, caseColor, positionX, positionY, scale, rotation, debouncedSetEditorImageUrl]);
 
   if (!modelLoaded) {
     return (
