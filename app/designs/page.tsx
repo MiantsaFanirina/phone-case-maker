@@ -68,7 +68,7 @@ export default function HomePage() {
   };
 
   if (loading) {
-    return <LoadingPage message="Loading designs..." />;
+    return <LoadingPage message="Loading designs ..." />;
   }
 
   return (
@@ -129,7 +129,7 @@ export default function HomePage() {
                     disabled={deleting === design.id}
                     onClick={() => handleDelete(design.id)}
                   >
-                    {deleting === design.id ? 'Deleting...' : 'Delete'}
+                    {deleting === design.id ? 'Deleting ...' : 'Delete'}
                   </button>
                 </div>
               </div>
@@ -176,7 +176,7 @@ export default function HomePage() {
                 Cancel
               </button>
               <button className="btn btn-danger" onClick={handleConfirmDelete}>
-                {deleting === deleteConfirmId ? 'Deleting...' : 'Delete'}
+                {deleting === deleteConfirmId ? 'Deleting ...' : 'Delete'}
               </button>
             </div>
           </div>

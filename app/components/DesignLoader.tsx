@@ -6,7 +6,7 @@ interface DesignLoaderProps {
   message?: string;
 }
 
-export default function DesignLoader({ message = 'Loading designs...' }: DesignLoaderProps) {
+export default function DesignLoader({ message = 'Loading design ...' }: DesignLoaderProps) {
   return (
     <div className="designs-page">
       <header className="designs-header">
