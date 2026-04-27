@@ -1625,13 +1625,19 @@ body {
   }
   
   .designs-header {
-    flex-direction: column;
-    gap: 16px;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
     padding: 16px;
+    gap: 12px;
   }
   
   .designs-header h1 {
     font-size: var(--font-size-xl);
+  }
+  
+  .designs-header .btn {
+    flex-shrink: 0;
   }
   
   .designs-main {
@@ -1644,8 +1650,6 @@ body {
   }
   
   .design-card {
-    max-width: 100%;
-    max-height: 50vh;
     border-radius: var(--radius-sm);
   }
   
