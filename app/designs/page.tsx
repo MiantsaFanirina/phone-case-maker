@@ -18,9 +18,23 @@ export default function HomePage() {
 
   useEffect(() => {
     async function load() {
-      const data = await getDesigns();
-      setDesigns(data as any);
-      setLoading(false);
+      try {
+        console.log('Loading designs...');
+        const data = await getDesigns();
+        console.log('Fetched designs:', data);
+        if (Array.isArray(data)) {
+          console.log('Number of designs:', data.length);
+          setDesigns(data);
+        } else {
+          console.error('getDesigns did not return an array:', data);
+          setDesigns([]);
+        }
+      } catch (error) {
+        console.error('Failed to load designs:', error);
+        setDesigns([]);
+      } finally {
+        setLoading(false);
+      }
     }
     load();
   }, [setDesigns]);
