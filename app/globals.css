@@ -1103,6 +1103,7 @@ body {
 
 .designs-header {
   display: flex;
+  flex-direction: row;
   justify-content: space-between;
   align-items: center;
   padding: 20px 32px;
@@ -1699,21 +1700,13 @@ body {
   
   @media (min-width: 769px) {
     .design-actions {
-      gap: 6px;
+      gap: 8px;
       padding: 10px 12px 14px;
     }
     
     .design-actions .btn {
-      padding: 7px 14px;
+      padding: 8px 12px;
       font-size: 10px;
-    }
-    
-    .design-actions .btn svg {
-      display: none;
-    }
-    
-    .design-actions .btn span {
-      display: inline;
     }
   }
   
