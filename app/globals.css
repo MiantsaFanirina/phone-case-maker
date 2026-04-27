@@ -213,6 +213,7 @@ body {
 
 .panel-section:last-child {
   border-bottom: none;
+  margin-bottom: 80px;
 }
 
 .section-title {
@@ -1167,6 +1168,7 @@ body {
   gap: 24px;
   max-width: 1600px;
   margin: 0 auto;
+  padding-bottom: 80px;
 }
 
 .design-card {
