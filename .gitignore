@@ -8,3 +8,6 @@ build/
 .env
 .env.local
 /app/generated/prisma
+
+.vercel
+.env*.local
