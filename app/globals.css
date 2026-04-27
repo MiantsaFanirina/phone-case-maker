@@ -1653,6 +1653,15 @@ body {
     border-radius: var(--radius-sm);
   }
   
+  .design-card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+  
+  .design-card:active {
+    transform: scale(0.98);
+  }
+  
   .design-preview {
     aspect-ratio: 4/3;
   }
