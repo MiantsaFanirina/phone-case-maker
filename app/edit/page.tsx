@@ -3,6 +3,7 @@
 import { useEffect, useCallback, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStore } from '../store';
+import { saveBase64Image } from '../actions';
 
 const CANVAS_WIDTH = 1200;
 const CANVAS_HEIGHT = 2400;
@@ -20,6 +21,7 @@ export default function EditImagePage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [img, setImg] = useState<HTMLImageElement | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
   
   const { 
     imageUrl,
@@ -37,6 +39,8 @@ export default function EditImagePage() {
     setOpacity,
     setEditorImageUrl,
     setImageUrl,
+    setToast,
+    toast,
   } = useStore();
 
   const debouncedSetEditorImageUrl = useCallback(
@@ -134,8 +138,35 @@ const draw = useCallback(() => {
     draw();
   }, [draw]);
 
-  const handleApply = () => {
-    draw();
+  const handleApply = async () => {
+    const canvas = canvasRef.current;
+    if (!canvas || !img) {
+      router.push('/create');
+      return;
+    }
+    
+    setSaving(true);
+    
+    try {
+      // Get the current canvas as data URL
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+      
+      // Save to file using server action
+      const fileUrl = await saveBase64Image(dataUrl);
+      
+      // Update store
+      const state = useStore.getState();
+      state.setImageUrl(fileUrl);
+      state.setEditorImageUrl(null);
+      
+      setToast('Image saved!');
+    } catch (error) {
+      console.error('Failed to save edited image:', error);
+      setToast('Failed to save image');
+    } finally {
+      setSaving(false);
+    }
+    
     router.push('/create');
   };
 
@@ -154,148 +185,158 @@ const draw = useCallback(() => {
   };
 
   return (
-    <div className="edit-page">
-      <header className="edit-header">
-        <h1>Edit Design</h1>
-        <div className="edit-actions">
-          <button className="btn btn-secondary" onClick={handleCancel}>Cancel</button>
-          <button className="btn" onClick={handleApply}>Done</button>
-        </div>
-      </header>
-      
-      <div className="edit-main">
-        <div className="edit-canvas-area">
-          <canvas
-            ref={canvasRef}
-            width={CANVAS_WIDTH}
-            height={CANVAS_HEIGHT}
-            className="edit-canvas"
-          />
-        </div>
+    <>
+      <div className="edit-page">
+        <header className="edit-header">
+          <h1>Edit Design</h1>
+          <div className="edit-actions">
+            <button className="btn btn-secondary" onClick={handleCancel}>Cancel</button>
+            <button className="btn" onClick={handleApply} disabled={saving}>
+              {saving ? 'Saving...' : 'Done'}
+            </button>
+          </div>
+        </header>
         
-        <div className="edit-controls">
-          <div className="control-section">
-            <div className="control-header">
-              <span>Adjustments</span>
-              <button className="reset-btn" onClick={handleReset}>Reset</button>
-            </div>
-            
-            <div className="slider-control">
-              <span className="slider-label">Position X</span>
-              <div className="slider-input-group">
-                <input
-                  type="number"
-                  className="slider-input"
-                  min="-100"
-                  max="100"
-                  value={positionX}
-                  onChange={(e) => setPositionX(Number(e.target.value))}
-                />
-                <input
-                  type="range"
-                  className="slider"
-                  min="-100"
-                  max="100"
-                  value={positionX}
-                  onChange={(e) => setPositionX(Number(e.target.value))}
-                />
+        <div className="edit-main">
+          <div className="edit-canvas-area">
+            <canvas
+              ref={canvasRef}
+              width={CANVAS_WIDTH}
+              height={CANVAS_HEIGHT}
+              className="edit-canvas"
+            />
+          </div>
+          
+          <div className="edit-controls">
+            <div className="control-section">
+              <div className="control-header">
+                <span>Adjustments</span>
+                <button className="reset-btn" onClick={handleReset}>Reset</button>
               </div>
-            </div>
-            
-            <div className="slider-control">
-              <span className="slider-label">Position Y</span>
-              <div className="slider-input-group">
-                <input
-                  type="number"
-                  className="slider-input"
-                  min="-100"
-                  max="100"
-                  value={positionY}
-                  onChange={(e) => setPositionY(Number(e.target.value))}
-                />
-                <input
-                  type="range"
-                  className="slider"
-                  min="-100"
-                  max="100"
-                  value={positionY}
-                  onChange={(e) => setPositionY(Number(e.target.value))}
-                />
+              
+              <div className="slider-control">
+                <span className="slider-label">Position X</span>
+                <div className="slider-input-group">
+                  <input
+                    type="number"
+                    className="slider-input"
+                    min="-100"
+                    max="100"
+                    value={positionX}
+                    onChange={(e) => setPositionX(Number(e.target.value))}
+                  />
+                  <input
+                    type="range"
+                    className="slider"
+                    min="-100"
+                    max="100"
+                    value={positionX}
+                    onChange={(e) => setPositionX(Number(e.target.value))}
+                  />
+                </div>
               </div>
-            </div>
-            
-            <div className="slider-control">
-              <span className="slider-label">Scale</span>
-              <div className="slider-input-group">
-                <input
-                  type="number"
-                  className="slider-input"
-                  min="0.3"
-                  max="3"
-                  step="0.01"
-                  value={scale}
-                  onChange={(e) => setScale(Number(e.target.value))}
-                />
-                <input
-                  type="range"
-                  className="slider"
-                  min="0.3"
-                  max="3"
-                  step="0.01"
-                  value={scale}
-                  onChange={(e) => setScale(Number(e.target.value))}
-                />
+              
+              <div className="slider-control">
+                <span className="slider-label">Position Y</span>
+                <div className="slider-input-group">
+                  <input
+                    type="number"
+                    className="slider-input"
+                    min="-100"
+                    max="100"
+                    value={positionY}
+                    onChange={(e) => setPositionY(Number(e.target.value))}
+                  />
+                  <input
+                    type="range"
+                    className="slider"
+                    min="-100"
+                    max="100"
+                    value={positionY}
+                    onChange={(e) => setPositionY(Number(e.target.value))}
+                  />
+                </div>
               </div>
-            </div>
-            
-            <div className="slider-control">
-              <span className="slider-label">Rotation</span>
-              <div className="slider-input-group">
-                <input
-                  type="number"
-                  className="slider-input"
-                  min="-180"
-                  max="180"
-                  value={rotation}
-                  onChange={(e) => setRotation(Number(e.target.value))}
-                />
-                <input
-                  type="range"
-                  className="slider"
-                  min="-180"
-                  max="180"
-                  value={rotation}
-                  onChange={(e) => setRotation(Number(e.target.value))}
-                />
+              
+              <div className="slider-control">
+                <span className="slider-label">Scale</span>
+                <div className="slider-input-group">
+                  <input
+                    type="number"
+                    className="slider-input"
+                    min="0.3"
+                    max="3"
+                    step="0.01"
+                    value={scale}
+                    onChange={(e) => setScale(Number(e.target.value))}
+                  />
+                  <input
+                    type="range"
+                    className="slider"
+                    min="0.3"
+                    max="3"
+                    step="0.01"
+                    value={scale}
+                    onChange={(e) => setScale(Number(e.target.value))}
+                  />
+                </div>
               </div>
-            </div>
-            
-            <div className="slider-control">
-              <span className="slider-label">Opacity</span>
-              <div className="slider-input-group">
-                <input
-                  type="number"
-                  className="slider-input"
-                  min="0"
-                  max="1"
-                  step="0.1"
-                  value={opacity}
-                  onChange={(e) => setOpacity(Number(e.target.value))}
-                />
-                <input
-                  type="range"
-                  className="slider"
-                  min="0"
-                  max="1"
-                  step="0.1"
-                  value={opacity}
-                  onChange={(e) => setOpacity(Number(e.target.value))}
-                />
+              
+              <div className="slider-control">
+                <span className="slider-label">Rotation</span>
+                <div className="slider-input-group">
+                  <input
+                    type="number"
+                    className="slider-input"
+                    min="-180"
+                    max="180"
+                    value={rotation}
+                    onChange={(e) => setRotation(Number(e.target.value))}
+                  />
+                  <input
+                    type="range"
+                    className="slider"
+                    min="-180"
+                    max="180"
+                    value={rotation}
+                    onChange={(e) => setRotation(Number(e.target.value))}
+                  />
+                </div>
+              </div>
+              
+              <div className="slider-control">
+                <span className="slider-label">Opacity</span>
+                <div className="slider-input-group">
+                  <input
+                    type="number"
+                    className="slider-input"
+                    min="0"
+                    max="1"
+                    step="0.1"
+                    value={opacity}
+                    onChange={(e) => setOpacity(Number(e.target.value))}
+                  />
+                  <input
+                    type="range"
+                    className="slider"
+                    min="0"
+                    max="1"
+                    step="0.1"
+                    value={opacity}
+                    onChange={(e) => setOpacity(Number(e.target.value))}
+                  />
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+      
+      {toast && (
+        <div className="toast" onClick={() => setToast(null)}>
+          {toast}
+        </div>
+      )}
+    </>
   );
 }

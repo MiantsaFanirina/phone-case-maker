@@ -10,11 +10,7 @@ interface DesignState {
     caseFinish: string;
     imageUrl: string | null;
     editorImageUrl: string | null;
-    positionX: number;
-    positionY: number;
-    scale: number;
-    rotation: number;
-    opacity: number;
+    hasImage?: boolean;
     createdAt: Date;
     updatedAt: Date;
   }>;
@@ -27,11 +23,7 @@ interface DesignState {
     caseFinish: string;
     imageUrl: string | null;
     editorImageUrl: string | null;
-    positionX: number;
-    positionY: number;
-    scale: number;
-    rotation: number;
-    opacity: number;
+    hasImage?: boolean;
     createdAt: Date;
     updatedAt: Date;
   }>) => void;

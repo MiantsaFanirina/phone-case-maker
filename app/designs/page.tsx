@@ -24,7 +24,16 @@ export default function HomePage() {
         console.log('Fetched designs:', data);
         if (Array.isArray(data)) {
           console.log('Number of designs:', data.length);
-          setDesigns(data);
+          // Map to match store type (excluding position/scale fields not needed for list view)
+          const mappedData = data.map(d => ({
+            ...d,
+            positionX: 0,
+            positionY: 0,
+            scale: 0.7,
+            rotation: 0,
+            opacity: 1,
+          }));
+          setDesigns(mappedData);
         } else {
           console.error('getDesigns did not return an array:', data);
           setDesigns([]);
@@ -109,10 +118,14 @@ export default function HomePage() {
             {designs.map((design) => (
               <div key={design.id} className="design-card">
                 <div className="design-preview">
-                  {design.imageUrl ? (
-                    <img src={design.imageUrl} alt={design.name} />
-                  ) : design.editorImageUrl ? (
-                    <img src={design.editorImageUrl} alt={design.name} />
+                  {design.hasImage ? (
+                    <img 
+                      src={design.imageUrl || design.editorImageUrl || '/placeholder.png'} 
+                      alt={design.name}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/placeholder.png';
+                      }}
+                    />
                   ) : (
                     <div className="design-placeholder">No image</div>
                   )}

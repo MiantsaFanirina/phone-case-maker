@@ -204,17 +204,26 @@ export default function EditDesignContent({ design }: { design: DesignDTO }) {
     setIsSaving(true);
 
     try {
-      await updateDesign(design.id, {
+      // Create a copy of the data to send
+      const updateData: any = {
         caseColor,
         caseFinish,
-        imageUrl,
-        editorImageUrl,
         positionX,
         positionY,
         scale,
         rotation,
         opacity,
-      });
+      };
+      
+      // Only include imageUrl if it changed
+      if (imageUrl !== design.imageUrl) {
+        updateData.imageUrl = imageUrl;
+      }
+      if (editorImageUrl !== design.editorImageUrl) {
+        updateData.editorImageUrl = editorImageUrl;
+      }
+      
+      await updateDesign(design.id, updateData);
       setToast('Design updated!');
     } catch (e) {
       console.error('Failed to update design:', e);

@@ -1,5 +1,9 @@
 import { create } from 'zustand';
 
+export function isDataUrl(str: string | null | undefined): boolean {
+  return typeof str === 'string' && str.startsWith('data:');
+}
+
 interface DecalState {
   imageUrl: string | null;
   editorImageUrl: string | null;

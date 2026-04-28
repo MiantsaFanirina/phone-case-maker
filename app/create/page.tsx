@@ -78,15 +78,27 @@ export default function CreatePage() {
     
     try {
       const state = useStore.getState();
-      const safeImageUrl = state.imageUrl || undefined;
-      const safeEditorImageUrl = state.editorImageUrl || undefined;
+      const { isDataUrl } = await import('../store');
+      let { imageUrl, editorImageUrl } = state;
+      
+      // Convert data URLs to file URLs via server action
+      if (imageUrl && isDataUrl(imageUrl)) {
+        const { saveBase64Image } = await import('../actions');
+        imageUrl = await saveBase64Image(imageUrl);
+        state.setImageUrl(imageUrl);
+      }
+      if (editorImageUrl && isDataUrl(editorImageUrl)) {
+        const { saveBase64Image } = await import('../actions');
+        editorImageUrl = await saveBase64Image(editorImageUrl);
+        state.setEditorImageUrl(editorImageUrl);
+      }
       
       await createDesign({
         name: designName.trim(),
         caseColor: state.caseColor,
         caseFinish: state.caseFinish,
-        imageUrl: safeImageUrl,
-        editorImageUrl: safeEditorImageUrl,
+        imageUrl: imageUrl || undefined,
+        editorImageUrl: editorImageUrl || undefined,
         positionX: state.positionX,
         positionY: state.positionY,
         scale: state.scale,
